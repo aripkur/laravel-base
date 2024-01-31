@@ -23,26 +23,22 @@ class UserRepo
         return User::where("username", $username)->first();
     }
 
+    // run with db::transaction
     public function save($data){
         if($data['username']){
             User::where("username", $data['username'])->update($data);
             return User::where('username', $data['username'])->first();
         }
 
-        DB::raw('lock tables users write');
 
-        $count = User::count();
+        $count = User::lockForUpdate()->count();
         $username = $this->generateUsername($count + 1, $data['role']);
-        $data = User::create([
+        return User::create([
                     "username" => $username,
                     "password" => Hash::make($username),
                     "fullname" => $data['fullname'],
                     "role" => $data['role']
                 ]);
-        DB::raw('unlock tables');
-
-        return $data;
-
     }
 
     public function resetPassword($username){
