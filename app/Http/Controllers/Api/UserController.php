@@ -48,8 +48,15 @@ class UserController {
             "fullname" => $req->fullname,
             "role" => $req->role,
         ];
-        $data = (new UserRepo)->save($data);
-        return Helper::jsonResponse(200, "Data berhasil disimpan", $data);
+        DB::connection("main")->beginTransaction();
+        try{
+            $data = (new UserRepo)->save($data);
+            DB::connection("main")->commit();
+            return Helper::jsonResponse(200, "Data berhasil disimpan", $data);
+        }catch(\Exception $e){
+            DB::connection("main")->rollback();
+            return Helper::jsonResponse(500, "Data gagal disimpan");
+        }
     }
 
     public function resetPassword(Request $req){
